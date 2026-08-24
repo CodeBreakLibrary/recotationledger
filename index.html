@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recitation Ledger</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#232C22">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ledger">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3EEDD;
+    --paper-2:#EAE3CC;
+    --ink:#232C22;
+    --ink-soft:#5B6154;
+    --rule:#C7BFA2;
+    --red:#A5342E;
+    --red-dark:#7C2622;
+    --gold:#C08F2B;
+    --gold-soft:#EADFB8;
+    --danger:#8C2A24;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:28px 16px 60px;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+  .masthead{
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px;
+    margin-bottom:22px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .masthead h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:30px;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .masthead .tally-total{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--ink-soft);
+    text-align:right;
+  }
+  .masthead .tally-total b{
+    display:block;
+    font-size:22px;
+    color:var(--red-dark);
+    font-weight:600;
+  }
+  .add-row{
+    margin-bottom:22px;
+  }
+  .add-student-btn{
+    width:100%;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    padding:13px 18px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    border-radius:3px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+  .add-student-btn:hover{background:var(--red-dark);}
+  .add-student-btn .plus-icon{font-size:18px;line-height:1;}
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(35,44,34,0.45);
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:10;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-box{
+    background:var(--paper);
+    border:2px solid var(--ink);
+    border-radius:6px;
+    padding:22px;
+    width:100%;
+    max-width:360px;
+  }
+  .modal-box h2{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:19px;
+    margin:0 0 14px;
+  }
+  .modal-box input{
+    width:100%;
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    padding:11px 14px;
+    border:1.5px solid var(--ink);
+    border-radius:3px;
+    background:#fff;
+    color:var(--ink);
+    margin-bottom:14px;
+  }
+  .modal-box input:focus{
+    outline:none;
+    border-color:var(--red-dark);
+  }
+  .modal-box .modal-btns{
+    display:flex;
+    gap:8px;
+    justify-content:flex-end;
+  }
+  .modal-box .modal-btns button{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    padding:9px 16px;
+    border-radius:3px;
+    cursor:pointer;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+  }
+  .modal-box .modal-btns button.modal-confirm{
+    background:var(--ink);
+    color:var(--paper);
+  }
+  .modal-box .modal-btns button.modal-confirm:hover{background:var(--red-dark);border-color:var(--red-dark);}
+  .modal-box .error-msg{
+    font-size:12px;
+    color:var(--danger);
+    margin:-8px 0 12px;
+    display:none;
+  }
+  .modal-box .error-msg.show{display:block;}
+  .empty{
+    grid-column:1 / -1;
+    text-align:center;
+    padding:50px 20px;
+    color:var(--ink-soft);
+    font-size:14px;
+    border:1.5px dashed var(--rule);
+    border-radius:4px;
+  }
+  .empty strong{
+    display:block;
+    font-family:'Fraunces',serif;
+    font-size:19px;
+    color:var(--ink);
+    margin-bottom:6px;
+    font-weight:500;
+  }
+  .roster{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px;
+    margin:0 0 30px;
+    padding:0;
+    list-style:none;
+  }
+  @media (min-width:640px){
+    .roster{grid-template-columns:repeat(3, minmax(0, 1fr));}
+    .add-row .add-student-btn{max-width:260px;margin:0 auto;}
+  }
+  @media (min-width:860px){
+    .roster{grid-template-columns:repeat(4, minmax(0, 1fr));}
+  }
+  .cell{
+    position:relative;
+    background:#fff;
+    border:1.5px solid var(--ink);
+    border-radius:5px;
+    padding:14px 12px 12px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-width:0;
+  }
+  .cell .name{
+    font-family:'Fraunces',serif;
+    font-size:16px;
+    font-weight:500;
+    min-width:0;
+    overflow-wrap:break-word;
+    padding-right:20px;
+  }
+  .cell .remove-x{
+    position:absolute;
+    top:4px;
+    right:4px;
+    background:none;
+    border:none;
+    color:var(--ink-soft);
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
+    padding:10px;
+    min-width:34px;
+    min-height:34px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .cell .remove-x:hover{color:var(--danger);}
+  .tally{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:flex-end;
+    gap:5px;
+    min-height:20px;
+  }
+  .tally-group{
+    position:relative;
+    display:flex;
+    gap:2.5px;
+    align-items:flex-end;
+  }
+  .tally-stroke{
+    width:2px;
+    height:18px;
+    background:var(--red);
+    border-radius:1px;
+  }
+  .tally-strike{
+    position:absolute;
+    left:-2px;
+    top:9px;
+    width:20px;
+    height:2px;
+    background:var(--red-dark);
+    transform:rotate(-32deg);
+    border-radius:1px;
+  }
+  .cell-bottom{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:6px;
+    margin-top:2px;
+  }
+  .count{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:16px;
+    font-weight:600;
+    color:var(--red-dark);
+    min-width:20px;
+  }
+  .controls{
+    display:flex;
+    gap:6px;
+  }
+  .controls button{
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+    font-size:17px;
+    font-weight:600;
+    cursor:pointer;
+    line-height:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .controls button.plus{background:var(--ink);color:var(--paper);}
+  .controls button.plus:hover{background:var(--red-dark);border-color:var(--red-dark);}
+  .controls button.minus:hover{border-color:var(--red-dark);color:var(--red-dark);}
+  .controls button:disabled{opacity:0.35;cursor:not-allowed;}
+  .footer-actions{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding-top:16px;
+    border-top:2px solid var(--ink);
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .footer-actions .hint{
+    font-size:12px;
+    color:var(--ink-soft);
+    font-style:italic;
+  }
+  .footer-actions .btns{display:flex;gap:8px;}
+  .footer-actions button{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:9px 14px;
+    border-radius:3px;
+    cursor:pointer;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+  }
+  .footer-actions button#resetBtn:hover{border-color:var(--gold);color:var(--gold);}
+  .footer-actions button#clearBtn:hover{border-color:var(--danger);color:var(--danger);}
+  .confirm-bar{
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:var(--gold-soft);
+    border:1.5px solid var(--gold);
+    border-radius:4px;
+    padding:10px 14px;
+    margin-bottom:16px;
+    font-size:13px;
+  }
+  .confirm-bar.show{display:flex;}
+  .confirm-bar .msg{font-weight:500;}
+  .confirm-bar .btns{display:flex;gap:8px;flex-shrink:0;}
+  .confirm-bar button{
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    font-weight:600;
+    padding:6px 12px;
+    border-radius:3px;
+    cursor:pointer;
+    border:1.5px solid var(--ink);
+    background:#fff;
+  }
+  .confirm-bar button.confirm-yes{background:var(--danger);border-color:var(--danger);color:#fff;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Recitation Ledger</h1>
+    <div class="tally-total">total marks<b id="totalCount">0</b></div>
+  </div>
+
+  <div class="add-row">
+    <button class="add-student-btn" id="openAddBtn"><span class="plus-icon">+</span>Add student</button>
+  </div>
+
+  <div class="modal-overlay" id="addOverlay">
+    <div class="modal-box">
+      <h2>Add a student</h2>
+      <input type="text" id="nameInput" placeholder="Student's name" maxlength="40">
+      <div class="error-msg" id="nameError">Enter a name first</div>
+      <div class="modal-btns">
+        <button id="modalCancel">Cancel</button>
+        <button class="modal-confirm" id="modalAdd">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-bar" id="confirmBar">
+    <span class="msg" id="confirmMsg"></span>
+    <div class="btns">
+      <button id="confirmCancel">Cancel</button>
+      <button class="confirm-yes" id="confirmYes">Confirm</button>
+    </div>
+  </div>
+
+  <div class="roster" id="roster"></div>
+
+  <div class="footer-actions">
+    <span class="hint">Saved on this device until you reset or clear</span>
+    <div class="btns">
+      <button id="resetBtn">Reset points</button>
+      <button id="clearBtn">Clear all</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'recitation-ledger-data';
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return { students: [], nextId: 1 };
+    const parsed = JSON.parse(raw);
+    return {
+      students: Array.isArray(parsed.students) ? parsed.students : [],
+      nextId: typeof parsed.nextId === 'number' ? parsed.nextId : 1
+    };
+  }catch(e){
+    return { students: [], nextId: 1 };
+  }
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ students, nextId }));
+  }catch(e){}
+}
+
+const initial = loadState();
+let students = initial.students;
+let nextId = initial.nextId;
+let pendingAction = null;
+
+const roster = document.getElementById('roster');
+const nameInput = document.getElementById('nameInput');
+const openAddBtn = document.getElementById('openAddBtn');
+const addOverlay = document.getElementById('addOverlay');
+const modalAdd = document.getElementById('modalAdd');
+const modalCancel = document.getElementById('modalCancel');
+const nameError = document.getElementById('nameError');
+const totalCount = document.getElementById('totalCount');
+const confirmBar = document.getElementById('confirmBar');
+const confirmMsg = document.getElementById('confirmMsg');
+
+function buildTally(n){
+  const wrap = document.createElement('div');
+  wrap.className = 'tally';
+  const full = Math.floor(n / 5);
+  const rem = n % 5;
+  for(let g=0; g<full; g++){
+    const grp = document.createElement('div');
+    grp.className = 'tally-group';
+    for(let i=0;i<4;i++){
+      const s = document.createElement('div');
+      s.className = 'tally-stroke';
+      grp.appendChild(s);
+    }
+    const strike = document.createElement('div');
+    strike.className = 'tally-strike';
+    grp.appendChild(strike);
+    wrap.appendChild(grp);
+  }
+  if(rem > 0){
+    const grp = document.createElement('div');
+    grp.className = 'tally-group';
+    for(let i=0;i<rem;i++){
+      const s = document.createElement('div');
+      s.className = 'tally-stroke';
+      grp.appendChild(s);
+    }
+    wrap.appendChild(grp);
+  }
+  return wrap;
+}
+
+function render(){
+  saveState();
+  roster.innerHTML = '';
+  if(students.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.innerHTML = '<strong>No names yet</strong>Tap "Add student" to start tracking recitation points.';
+    roster.appendChild(empty);
+    totalCount.textContent = '0';
+    return;
+  }
+  let total = 0;
+  students.forEach(st => {
+    total += st.points;
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-x';
+    removeBtn.textContent = '\u00d7';
+    removeBtn.setAttribute('aria-label', 'Remove ' + st.name);
+    removeBtn.onclick = () => {
+      students = students.filter(s => s.id !== st.id);
+      render();
+    };
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'name';
+    nameEl.textContent = st.name;
+
+    const tallyEl = buildTally(st.points);
+
+    const bottom = document.createElement('div');
+    bottom.className = 'cell-bottom';
+
+    const countEl = document.createElement('div');
+    countEl.className = 'count';
+    countEl.textContent = st.points;
+
+    const controls = document.createElement('div');
+    controls.className = 'controls';
+
+    const minusBtn = document.createElement('button');
+    minusBtn.className = 'minus';
+    minusBtn.textContent = '\u2212';
+    minusBtn.setAttribute('aria-label', 'Remove one point from ' + st.name);
+    minusBtn.disabled = st.points <= 0;
+    minusBtn.onclick = () => { st.points = Math.max(0, st.points - 1); render(); };
+
+    const plusBtn = document.createElement('button');
+    plusBtn.className = 'plus';
+    plusBtn.textContent = '+';
+    plusBtn.setAttribute('aria-label', 'Add one point to ' + st.name);
+    plusBtn.onclick = () => { st.points += 1; render(); };
+
+    controls.appendChild(minusBtn);
+    controls.appendChild(plusBtn);
+    bottom.appendChild(countEl);
+    bottom.appendChild(controls);
+
+    cell.appendChild(removeBtn);
+    cell.appendChild(nameEl);
+    cell.appendChild(tallyEl);
+    cell.appendChild(bottom);
+    roster.appendChild(cell);
+  });
+  totalCount.textContent = total;
+}
+
+function openAddModal(){
+  nameInput.value = '';
+  nameError.classList.remove('show');
+  addOverlay.classList.add('show');
+  setTimeout(() => nameInput.focus(), 0);
+}
+
+function closeAddModal(){
+  addOverlay.classList.remove('show');
+}
+
+function addStudent(){
+  const name = nameInput.value.trim();
+  if(!name){
+    nameError.classList.add('show');
+    nameInput.focus();
+    return;
+  }
+  students.push({ id: nextId++, name: name, points: 0 });
+  closeAddModal();
+  render();
+}
+
+openAddBtn.onclick = openAddModal;
+modalCancel.onclick = closeAddModal;
+modalAdd.onclick = addStudent;
+addOverlay.addEventListener('click', e => {
+  if(e.target === addOverlay) closeAddModal();
+});
+nameInput.addEventListener('keydown', e => {
+  if(e.key === 'Enter') addStudent();
+});
+nameInput.addEventListener('input', () => nameError.classList.remove('show'));
+
+function askConfirm(action, message){
+  pendingAction = action;
+  confirmMsg.textContent = message;
+  confirmBar.classList.add('show');
+}
+
+document.getElementById('resetBtn').onclick = () => {
+  askConfirm('reset', 'Reset every point to zero? Names stay.');
+};
+document.getElementById('clearBtn').onclick = () => {
+  askConfirm('clear', 'Remove all names and points? This cannot be undone.');
+};
+document.getElementById('confirmCancel').onclick = () => {
+  pendingAction = null;
+  confirmBar.classList.remove('show');
+};
+document.getElementById('confirmYes').onclick = () => {
+  if(pendingAction === 'reset'){
+    students.forEach(s => s.points = 0);
+  } else if(pendingAction === 'clear'){
+    students = [];
+  }
+  pendingAction = null;
+  confirmBar.classList.remove('show');
+  render();
+};
+
+render();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
