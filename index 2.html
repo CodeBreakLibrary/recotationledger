@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recitation Ledger</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#232C22">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ledger">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3EEDD;
+    --paper-2:#EAE3CC;
+    --ink:#232C22;
+    --ink-soft:#5B6154;
+    --rule:#C7BFA2;
+    --red:#A5342E;
+    --red-dark:#7C2622;
+    --gold:#C08F2B;
+    --gold-soft:#EADFB8;
+    --danger:#8C2A24;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:28px 16px 60px;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+  .masthead{
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px;
+    margin-bottom:22px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .masthead-left h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:30px;
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+  }
+  .masthead-left .clock{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .masthead .tally-total{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--ink-soft);
+    text-align:right;
+  }
+  .masthead .tally-total b{
+    display:block;
+    font-size:22px;
+    color:var(--red-dark);
+    font-weight:600;
+  }
+  .add-row{
+    margin-bottom:22px;
+  }
+  .add-student-btn{
+    width:100%;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    padding:13px 18px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    border-radius:3px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+  .add-student-btn:hover{background:var(--red-dark);}
+  .add-student-btn .plus-icon{font-size:18px;line-height:1;}
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(35,44,34,0.45);
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:10;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-box{
+    background:var(--paper);
+    border:2px solid var(--ink);
+    border-radius:6px;
+    padding:22px;
+    width:100%;
+    max-width:360px;
+  }
+  .modal-box h2{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:19px;
+    margin:0 0 14px;
+  }
+  .modal-box input{
+    width:100%;
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    padding:11px 14px;
+    border:1.5px solid var(--ink);
+    border-radius:3px;
+    background:#fff;
+    color:var(--ink);
+    margin-bottom:14px;
+  }
+  .modal-box input:focus{
+    outline:none;
+    border-color:var(--red-dark);
+  }
+  .modal-box .modal-btns{
+    display:flex;
+    gap:8px;
+    justify-content:flex-end;
+  }
+  .modal-box .modal-btns button{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    padding:9px 16px;
+    border-radius:3px;
+    cursor:pointer;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+  }
+  .modal-box .modal-btns button.modal-confirm{
+    background:var(--ink);
+    color:var(--paper);
+  }
+  .modal-box .modal-btns button.modal-confirm:hover{background:var(--red-dark);border-color:var(--red-dark);}
+  .modal-box .error-msg{
+    font-size:12px;
+    color:var(--danger);
+    margin:-8px 0 12px;
+    display:none;
+  }
+  .modal-box .error-msg.show{display:block;}
+  .empty{
+    grid-column:1 / -1;
+    text-align:center;
+    padding:50px 20px;
+    color:var(--ink-soft);
+    font-size:14px;
+    border:1.5px dashed var(--rule);
+    border-radius:4px;
+  }
+  .empty strong{
+    display:block;
+    font-family:'Fraunces',serif;
+    font-size:19px;
+    color:var(--ink);
+    margin-bottom:6px;
+    font-weight:500;
+  }
+  .roster{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px;
+    margin:0 0 30px;
+    padding:0;
+    list-style:none;
+  }
+  @media (min-width:640px){
+    .roster{grid-template-columns:repeat(3, minmax(0, 1fr));}
+    .add-row .add-student-btn{max-width:260px;margin:0 auto;}
+  }
+  @media (min-width:860px){
+    .roster{grid-template-columns:repeat(4, minmax(0, 1fr));}
+  }
+  .cell{
+    position:relative;
+    background:#fff;
+    border:1.5px solid var(--ink);
+    border-radius:5px;
+    padding:14px 12px 12px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-width:0;
+    cursor:pointer;
+    transition:box-shadow 0.15s ease, transform 0.15s ease;
+  }
+  .cell:hover{box-shadow:0 3px 0 var(--ink);transform:translateY(-2px);}
+  .cell .name{
+    font-family:'Fraunces',serif;
+    font-size:16px;
+    font-weight:500;
+    min-width:0;
+    overflow-wrap:break-word;
+    padding-right:20px;
+  }
+  .cell .remove-x{
+    position:absolute;
+    top:4px;
+    right:4px;
+    background:none;
+    border:none;
+    color:var(--ink-soft);
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
+    padding:10px;
+    min-width:34px;
+    min-height:34px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:2;
+  }
+  .cell .remove-x:hover{color:var(--danger);}
+  .tally{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:flex-end;
+    gap:5px;
+    min-height:20px;
+  }
+  .tally-group{
+    position:relative;
+    display:flex;
+    gap:2.5px;
+    align-items:flex-end;
+  }
+  .tally-stroke{
+    width:2px;
+    height:18px;
+    background:var(--red);
+    border-radius:1px;
+  }
+  .tally-strike{
+    position:absolute;
+    left:-2px;
+    top:9px;
+    width:20px;
+    height:2px;
+    background:var(--red-dark);
+    transform:rotate(-32deg);
+    border-radius:1px;
+  }
+  .cell-bottom{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:6px;
+    margin-top:2px;
+  }
+  .count{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:16px;
+    font-weight:600;
+    color:var(--red-dark);
+    min-width:20px;
+  }
+  .controls{
+    display:flex;
+    gap:6px;
+    position:relative;
+    z-index:2;
+  }
+  .controls button{
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+    font-size:17px;
+    font-weight:600;
+    cursor:pointer;
+    line-height:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .controls button.plus{background:var(--ink);color:var(--paper);}
+  .controls button.plus:hover{background:var(--red-dark);border-color:var(--red-dark);}
+  .controls button.minus:hover{border-color:var(--red-dark);color:var(--red-dark);}
+  .controls button:disabled{opacity:0.35;cursor:not-allowed;}
+  .footer-actions{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding-top:16px;
+    border-top:2px solid var(--ink);
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .footer-actions .hint{
+    font-size:12px;
+    color:var(--ink-soft);
+    font-style:italic;
+  }
+  .footer-actions .btns{display:flex;gap:8px;}
+  .footer-actions button{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:9px 14px;
+    border-radius:3px;
+    cursor:pointer;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+  }
+  .footer-actions button#resetBtn:hover{border-color:var(--gold);color:var(--gold);}
+  .footer-actions button#clearBtn:hover{border-color:var(--danger);color:var(--danger);}
+  .confirm-bar{
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:var(--gold-soft);
+    border:1.5px solid var(--gold);
+    border-radius:4px;
+    padding:10px 14px;
+    margin-bottom:16px;
+    font-size:13px;
+  }
+  .confirm-bar.show{display:flex;}
+  .confirm-bar .msg{font-weight:500;}
+  .confirm-bar .btns{display:flex;gap:8px;flex-shrink:0;}
+  .confirm-bar button{
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    font-weight:600;
+    padding:6px 12px;
+    border-radius:3px;
+    cursor:pointer;
+    border:1.5px solid var(--ink);
+    background:#fff;
+  }
+  .confirm-bar button.confirm-yes{background:var(--danger);border-color:var(--danger);color:#fff;}
+
+  /* Full-screen detail view */
+  .detail-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:var(--paper);
+    z-index:20;
+    overflow-y:auto;
+    opacity:0;
+    transform:scale(0.96);
+    transition:opacity 0.28s ease, transform 0.28s ease;
+  }
+  .detail-overlay.show{display:block;}
+  .detail-overlay.in{opacity:1;transform:scale(1);}
+  .detail-inner{
+    max-width:760px;
+    margin:0 auto;
+    padding:22px 18px 60px;
+  }
+  .detail-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:22px;
+  }
+  .detail-close{
+    background:#fff;
+    border:1.5px solid var(--ink);
+    border-radius:50%;
+    width:40px;
+    height:40px;
+    font-size:18px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  .detail-close:hover{border-color:var(--danger);color:var(--danger);}
+  .detail-heading h2{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:0 0 4px;
+  }
+  .detail-heading .sub{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .detail-heading .sub b{color:var(--red-dark);}
+  .detail-controls{
+    display:flex;
+    gap:10px;
+    margin-bottom:28px;
+  }
+  .detail-controls button{
+    flex:1;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    padding:12px;
+    border-radius:4px;
+    cursor:pointer;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+  }
+  .detail-controls button.plus{background:var(--ink);color:var(--paper);}
+  .detail-controls button.plus:hover{background:var(--red-dark);border-color:var(--red-dark);}
+  .detail-controls button:disabled{opacity:0.35;cursor:not-allowed;}
+  .section-label{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--ink-soft);
+    margin:0 0 10px;
+  }
+  .chart-box{
+    border:1.5px solid var(--ink);
+    border-radius:6px;
+    background:#fff;
+    padding:16px 12px 10px;
+    margin-bottom:26px;
+  }
+  .chart-empty{
+    color:var(--ink-soft);
+    font-size:13px;
+    text-align:center;
+    padding:30px 10px;
+  }
+  .bar-chart{width:100%;height:auto;display:block;}
+  .log-list{
+    list-style:none;
+    margin:0;
+    padding:0;
+    border-top:1px solid var(--rule);
+  }
+  .log-list li{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 4px;
+    border-bottom:1px solid var(--rule);
+    font-size:13.5px;
+  }
+  .log-list .log-date{
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+  }
+  .log-list .log-time{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--ink-soft);
+    font-size:12.5px;
+  }
+  .log-empty{
+    color:var(--ink-soft);
+    font-size:13px;
+    padding:16px 4px;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <div class="masthead-left">
+      <h1>Recitation Ledger</h1>
+      <div class="clock" id="clock">&nbsp;</div>
+    </div>
+    <div class="tally-total">total marks<b id="totalCount">0</b></div>
+  </div>
+
+  <div class="add-row">
+    <button class="add-student-btn" id="openAddBtn"><span class="plus-icon">+</span>Add student</button>
+  </div>
+
+  <div class="modal-overlay" id="addOverlay">
+    <div class="modal-box">
+      <h2>Add a student</h2>
+      <input type="text" id="nameInput" placeholder="Student's name" maxlength="40">
+      <div class="error-msg" id="nameError">Enter a name first</div>
+      <div class="modal-btns">
+        <button id="modalCancel">Cancel</button>
+        <button class="modal-confirm" id="modalAdd">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-bar" id="confirmBar">
+    <span class="msg" id="confirmMsg"></span>
+    <div class="btns">
+      <button id="confirmCancel">Cancel</button>
+      <button class="confirm-yes" id="confirmYes">Confirm</button>
+    </div>
+  </div>
+
+  <div class="roster" id="roster"></div>
+
+  <div class="footer-actions">
+    <span class="hint">Saved on this device until you reset or clear</span>
+    <div class="btns">
+      <button id="resetBtn">Reset points</button>
+      <button id="clearBtn">Clear all</button>
+    </div>
+  </div>
+</div>
+
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-inner">
+    <div class="detail-top">
+      <div class="detail-heading">
+        <h2 id="detailName"></h2>
+        <div class="sub"><b id="detailCount">0</b> points logged</div>
+      </div>
+      <button class="detail-close" id="detailClose" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="detail-controls">
+      <button class="minus" id="detailMinus">&minus; Remove last</button>
+      <button class="plus" id="detailPlus">+ Add point</button>
+    </div>
+
+    <div class="section-label">Points per day</div>
+    <div class="chart-box" id="chartBox"></div>
+
+    <div class="section-label">Log</div>
+    <ul class="log-list" id="logList"></ul>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'recitation-ledger-data';
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return { students: [], nextId: 1 };
+    const parsed = JSON.parse(raw);
+    let list = Array.isArray(parsed.students) ? parsed.students : [];
+    list = list.map(s => {
+      if(Array.isArray(s.ticks)) return s;
+      const n = typeof s.points === 'number' ? s.points : 0;
+      const now = new Date().toISOString();
+      return { id: s.id, name: s.name, ticks: Array.from({length:n}, () => now) };
+    });
+    return {
+      students: list,
+      nextId: typeof parsed.nextId === 'number' ? parsed.nextId : 1
+    };
+  }catch(e){
+    return { students: [], nextId: 1 };
+  }
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ students, nextId }));
+  }catch(e){}
+}
+
+const initial = loadState();
+let students = initial.students;
+let nextId = initial.nextId;
+let pendingAction = null;
+let openDetailId = null;
+
+const roster = document.getElementById('roster');
+const nameInput = document.getElementById('nameInput');
+const openAddBtn = document.getElementById('openAddBtn');
+const addOverlay = document.getElementById('addOverlay');
+const modalAdd = document.getElementById('modalAdd');
+const modalCancel = document.getElementById('modalCancel');
+const nameError = document.getElementById('nameError');
+const totalCount = document.getElementById('totalCount');
+const confirmBar = document.getElementById('confirmBar');
+const confirmMsg = document.getElementById('confirmMsg');
+const clockEl = document.getElementById('clock');
+
+const detailOverlay = document.getElementById('detailOverlay');
+const detailName = document.getElementById('detailName');
+const detailCount = document.getElementById('detailCount');
+const detailMinus = document.getElementById('detailMinus');
+const detailPlus = document.getElementById('detailPlus');
+const detailClose = document.getElementById('detailClose');
+const chartBox = document.getElementById('chartBox');
+const logList = document.getElementById('logList');
+
+function updateClock(){
+  const now = new Date();
+  const dateStr = now.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
+  const timeStr = now.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+  clockEl.textContent = dateStr + '  \u2022  ' + timeStr;
+}
+updateClock();
+setInterval(updateClock, 15000);
+
+function buildTally(n){
+  const wrap = document.createElement('div');
+  wrap.className = 'tally';
+  const full = Math.floor(n / 5);
+  const rem = n % 5;
+  for(let g=0; g<full; g++){
+    const grp = document.createElement('div');
+    grp.className = 'tally-group';
+    for(let i=0;i<4;i++){
+      const s = document.createElement('div');
+      s.className = 'tally-stroke';
+      grp.appendChild(s);
+    }
+    const strike = document.createElement('div');
+    strike.className = 'tally-strike';
+    grp.appendChild(strike);
+    wrap.appendChild(grp);
+  }
+  if(rem > 0){
+    const grp = document.createElement('div');
+    grp.className = 'tally-group';
+    for(let i=0;i<rem;i++){
+      const s = document.createElement('div');
+      s.className = 'tally-stroke';
+      grp.appendChild(s);
+    }
+    wrap.appendChild(grp);
+  }
+  return wrap;
+}
+
+function findStudent(id){
+  return students.find(s => s.id === id);
+}
+
+function render(){
+  saveState();
+  roster.innerHTML = '';
+  if(students.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.innerHTML = '<strong>No names yet</strong>Tap "Add student" to start tracking recitation points.';
+    roster.appendChild(empty);
+    totalCount.textContent = '0';
+  } else {
+    let total = 0;
+    students.forEach(st => {
+      const n = st.ticks.length;
+      total += n;
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.onclick = () => openDetail(st.id);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'remove-x';
+      removeBtn.textContent = '\u00d7';
+      removeBtn.setAttribute('aria-label', 'Remove ' + st.name);
+      removeBtn.onclick = (e) => {
+        e.stopPropagation();
+        students = students.filter(s => s.id !== st.id);
+        render();
+      };
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'name';
+      nameEl.textContent = st.name;
+
+      const tallyEl = buildTally(n);
+
+      const bottom = document.createElement('div');
+      bottom.className = 'cell-bottom';
+
+      const countEl = document.createElement('div');
+      countEl.className = 'count';
+      countEl.textContent = n;
+
+      const controls = document.createElement('div');
+      controls.className = 'controls';
+
+      const minusBtn = document.createElement('button');
+      minusBtn.className = 'minus';
+      minusBtn.textContent = '\u2212';
+      minusBtn.setAttribute('aria-label', 'Remove one point from ' + st.name);
+      minusBtn.disabled = n <= 0;
+      minusBtn.onclick = (e) => { e.stopPropagation(); st.ticks.pop(); render(); };
+
+      const plusBtn = document.createElement('button');
+      plusBtn.className = 'plus';
+      plusBtn.textContent = '+';
+      plusBtn.setAttribute('aria-label', 'Add one point to ' + st.name);
+      plusBtn.onclick = (e) => { e.stopPropagation(); st.ticks.push(new Date().toISOString()); render(); };
+
+      controls.appendChild(minusBtn);
+      controls.appendChild(plusBtn);
+      bottom.appendChild(countEl);
+      bottom.appendChild(controls);
+
+      cell.appendChild(removeBtn);
+      cell.appendChild(nameEl);
+      cell.appendChild(tallyEl);
+      cell.appendChild(bottom);
+      roster.appendChild(cell);
+    });
+    totalCount.textContent = total;
+  }
+
+  if(openDetailId !== null){
+    const st = findStudent(openDetailId);
+    if(st) renderDetail(st);
+    else closeDetail();
+  }
+}
+
+function dayKey(iso){
+  const d = new Date(iso);
+  return d.toISOString().slice(0,10);
+}
+
+function dayLabel(key){
+  const d = new Date(key + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+}
+
+function renderDetail(st){
+  detailName.textContent = st.name;
+  detailCount.textContent = st.ticks.length;
+  detailMinus.disabled = st.ticks.length === 0;
+
+  const counts = {};
+  st.ticks.forEach(iso => {
+    const k = dayKey(iso);
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  const days = Object.keys(counts).sort();
+
+  chartBox.innerHTML = '';
+  if(days.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'chart-empty';
+    empty.textContent = 'No points logged yet.';
+    chartBox.appendChild(empty);
+  } else {
+    const shown = days.slice(-14);
+    const maxVal = Math.max(...shown.map(k => counts[k]), 1);
+    const w = 700, h = 200, padL = 26, padB = 30, padT = 10;
+    const barGap = 8;
+    const barW = (w - padL - 10) / shown.length - barGap;
+    let svg = '<svg class="bar-chart" viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">';
+    svg += '<line x1="' + padL + '" y1="' + (h-padB) + '" x2="' + w + '" y2="' + (h-padB) + '" stroke="#C7BFA2" stroke-width="1.5"/>';
+    shown.forEach((k, i) => {
+      const val = counts[k];
+      const barH = (val / maxVal) * (h - padB - padT - 16);
+      const x = padL + i * (barW + barGap) + barGap/2;
+      const y = h - padB - barH;
+      svg += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + barH.toFixed(1) + '" rx="2" fill="#A5342E"/>';
+      svg += '<text x="' + (x + barW/2).toFixed(1) + '" y="' + (y - 5) + '" font-size="11" font-family="IBM Plex Mono, monospace" fill="#7C2622" text-anchor="middle">' + val + '</text>';
+      svg += '<text x="' + (x + barW/2).toFixed(1) + '" y="' + (h - padB + 15) + '" font-size="9.5" font-family="Inter, sans-serif" fill="#5B6154" text-anchor="middle">' + dayLabel(k) + '</text>';
+    });
+    svg += '</svg>';
+    chartBox.innerHTML = svg;
+  }
+
+  logList.innerHTML = '';
+  if(st.ticks.length === 0){
+    const li = document.createElement('li');
+    li.className = 'log-empty';
+    li.textContent = 'Nothing logged for this student yet.';
+    logList.appendChild(li);
+  } else {
+    const sorted = st.ticks.slice().sort().reverse();
+    sorted.forEach(iso => {
+      const d = new Date(iso);
+      const li = document.createElement('li');
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'log-date';
+      dateSpan.textContent = d.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'log-time';
+      timeSpan.textContent = d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+      li.appendChild(dateSpan);
+      li.appendChild(timeSpan);
+      logList.appendChild(li);
+    });
+  }
+}
+
+function openDetail(id){
+  openDetailId = id;
+  const st = findStudent(id);
+  if(!st) return;
+  renderDetail(st);
+  detailOverlay.classList.add('show');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => detailOverlay.classList.add('in'));
+  });
+}
+
+function closeDetail(){
+  detailOverlay.classList.remove('in');
+  openDetailId = null;
+  setTimeout(() => {
+    if(openDetailId === null) detailOverlay.classList.remove('show');
+  }, 280);
+}
+
+detailClose.onclick = closeDetail;
+detailPlus.onclick = () => {
+  const st = findStudent(openDetailId);
+  if(!st) return;
+  st.ticks.push(new Date().toISOString());
+  render();
+};
+detailMinus.onclick = () => {
+  const st = findStudent(openDetailId);
+  if(!st || st.ticks.length === 0) return;
+  st.ticks.pop();
+  render();
+};
+
+function openAddModal(){
+  nameInput.value = '';
+  nameError.classList.remove('show');
+  addOverlay.classList.add('show');
+  setTimeout(() => nameInput.focus(), 0);
+}
+
+function closeAddModal(){
+  addOverlay.classList.remove('show');
+}
+
+function addStudent(){
+  const name = nameInput.value.trim();
+  if(!name){
+    nameError.classList.add('show');
+    nameInput.focus();
+    return;
+  }
+  students.push({ id: nextId++, name: name, ticks: [] });
+  closeAddModal();
+  render();
+}
+
+openAddBtn.onclick = openAddModal;
+modalCancel.onclick = closeAddModal;
+modalAdd.onclick = addStudent;
+addOverlay.addEventListener('click', e => {
+  if(e.target === addOverlay) closeAddModal();
+});
+nameInput.addEventListener('keydown', e => {
+  if(e.key === 'Enter') addStudent();
+});
+nameInput.addEventListener('input', () => nameError.classList.remove('show'));
+
+function askConfirm(action, message){
+  pendingAction = action;
+  confirmMsg.textContent = message;
+  confirmBar.classList.add('show');
+}
+
+document.getElementById('resetBtn').onclick = () => {
+  askConfirm('reset', 'Reset every point to zero? Names stay.');
+};
+document.getElementById('clearBtn').onclick = () => {
+  askConfirm('clear', 'Remove all names and points? This cannot be undone.');
+};
+document.getElementById('confirmCancel').onclick = () => {
+  pendingAction = null;
+  confirmBar.classList.remove('show');
+};
+document.getElementById('confirmYes').onclick = () => {
+  if(pendingAction === 'reset'){
+    students.forEach(s => s.ticks = []);
+  } else if(pendingAction === 'clear'){
+    students = [];
+    closeDetail();
+  }
+  pendingAction = null;
+  confirmBar.classList.remove('show');
+  render();
+};
+
+render();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
