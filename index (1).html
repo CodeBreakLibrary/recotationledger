@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recitation Ledger</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#232C22">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ledger">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3EEDD;
+    --paper-2:#EAE3CC;
+    --ink:#232C22;
+    --ink-soft:#5B6154;
+    --rule:#C7BFA2;
+    --red:#A5342E;
+    --red-dark:#7C2622;
+    --gold:#C08F2B;
+    --gold-soft:#EADFB8;
+    --danger:#8C2A24;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:28px 16px 60px;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+  .masthead{
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px;
+    margin-bottom:16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .masthead-left h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:30px;
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+  }
+  .masthead-left .clock{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .masthead .tally-total{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--ink-soft);
+    text-align:right;
+  }
+  .masthead .tally-total b{
+    display:block;
+    font-size:22px;
+    color:var(--red-dark);
+    font-weight:600;
+  }
+  .masthead-right{
+    display:flex;
+    align-items:flex-end;
+    gap:12px;
+  }
+  .settings-btn{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+    font-size:17px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  .settings-btn:hover{border-color:var(--red-dark);color:var(--red-dark);}
+
+  /* Class tabs */
+  .class-bar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:20px;
+    overflow-x:auto;
+    padding-bottom:4px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .class-tabs{
+    display:flex;
+    gap:6px;
+    flex:1;
+    min-width:0;
+  }
+  .class-tab{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    padding:9px 15px;
+    border-radius:20px;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+    cursor:pointer;
+    white-space:nowrap;
+    flex-shrink:0;
+  }
+  .class-tab.active{background:var(--ink);color:var(--paper);}
+  .class-tab-add{
+    border-style:dashed;
+    color:var(--ink-soft);
+    background:transparent;
+  }
+  .class-tab-add:hover{border-color:var(--red-dark);color:var(--red-dark);}
+  .class-manage-btn{
+    flex-shrink:0;
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    border:1.5px dashed var(--ink-soft);
+    background:#fff;
+    color:var(--ink-soft);
+    font-size:16px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .class-manage-btn:hover{border-color:var(--red-dark);color:var(--red-dark);}
+  .class-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .class-row input{
+    flex:1;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    padding:9px 10px;
+    border:1.5px solid var(--ink);
+    border-radius:3px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .class-row input:focus{outline:none;border-color:var(--red-dark);}
+  .class-row button{
+    flex-shrink:0;
+    font-family:'Inter',sans-serif;
+    font-size:12.5px;
+    font-weight:600;
+    padding:8px 11px;
+    border-radius:3px;
+    cursor:pointer;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+  }
+  .class-row button.del:hover{border-color:var(--danger);color:var(--danger);}
+  .class-add-row{
+    display:flex;
+    gap:8px;
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid var(--rule);
+  }
+  .class-add-row input{
+    flex:1;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    padding:9px 10px;
+    border:1.5px solid var(--ink);
+    border-radius:3px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .class-add-row button{
+    flex-shrink:0;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:9px 14px;
+    border-radius:3px;
+    cursor:pointer;
+    border:none;
+    background:var(--ink);
+    color:var(--paper);
+  }
+  .class-add-row button:hover{background:var(--red-dark);}
+
+  .sheets-field{margin-bottom:12px;}
+  .sheets-field label{
+    display:block;
+    font-size:12px;
+    font-weight:600;
+    color:var(--ink-soft);
+    margin-bottom:4px;
+  }
+  .sheets-field input{
+    width:100%;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    padding:9px 10px;
+    border:1.5px solid var(--ink);
+    border-radius:3px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .sheets-field input:focus{outline:none;border-color:var(--red-dark);}
+  .sheets-field .help{
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-top:3px;
+  }
+  .sheets-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px solid var(--rule);
+  }
+  .sheets-actions button{
+    flex:1;
+    min-width:120px;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:10px 10px;
+    border-radius:3px;
+    cursor:pointer;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+  }
+  .sheets-actions button.primary{background:var(--ink);color:var(--paper);}
+  .sheets-actions button.primary:hover{background:var(--red-dark);border-color:var(--red-dark);}
+  .sheets-actions button:disabled{opacity:0.4;cursor:not-allowed;}
+  .sheets-status{
+    font-size:12.5px;
+    margin-top:12px;
+    padding:9px 11px;
+    border-radius:4px;
+    display:none;
+  }
+  .sheets-status.show{display:block;}
+  .sheets-status.ok{background:#E4EBE0;color:#33502E;}
+  .sheets-status.err{background:#F3DEDA;color:var(--danger);}
+  .sheets-status.pending{background:var(--gold-soft);color:#6E5119;}
+  .sheets-setup{
+    background:var(--paper-2);
+    border:1px solid var(--rule);
+    border-radius:5px;
+    padding:14px 14px 12px;
+    margin-bottom:16px;
+  }
+  .sheets-setup-title{
+    font-weight:600;
+    font-size:13px;
+    margin-bottom:8px;
+  }
+  .sheets-setup ol{
+    margin:0 0 12px;
+    padding-left:19px;
+    font-size:12.5px;
+    line-height:1.55;
+    color:var(--ink);
+  }
+  .sheets-setup ol li{margin-bottom:2px;}
+  .sheets-setup button{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:9px 14px;
+    border-radius:3px;
+    cursor:pointer;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+  }
+  .sheets-setup button:hover{border-color:var(--red-dark);color:var(--red-dark);}
+
+  .add-row{
+    margin-bottom:22px;
+  }
+  .add-student-btn{
+    width:100%;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    padding:13px 18px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    border-radius:3px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+  .add-student-btn:hover{background:var(--red-dark);}
+  .add-student-btn .plus-icon{font-size:18px;line-height:1;}
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(35,44,34,0.45);
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:10;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-box{
+    background:var(--paper);
+    border:2px solid var(--ink);
+    border-radius:6px;
+    padding:22px;
+    width:100%;
+    max-width:360px;
+    max-height:85vh;
+    overflow-y:auto;
+  }
+  .modal-box h2{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:19px;
+    margin:0 0 14px;
+  }
+  .modal-box input{
+    width:100%;
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    padding:11px 14px;
+    border:1.5px solid var(--ink);
+    border-radius:3px;
+    background:#fff;
+    color:var(--ink);
+    margin-bottom:14px;
+  }
+  .modal-box input:focus{
+    outline:none;
+    border-color:var(--red-dark);
+  }
+  .modal-box .modal-btns{
+    display:flex;
+    gap:8px;
+    justify-content:flex-end;
+  }
+  .modal-box .modal-btns button{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    padding:9px 16px;
+    border-radius:3px;
+    cursor:pointer;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+  }
+  .modal-box .modal-btns button.modal-confirm{
+    background:var(--ink);
+    color:var(--paper);
+  }
+  .modal-box .modal-btns button.modal-confirm:hover{background:var(--red-dark);border-color:var(--red-dark);}
+  .modal-box .error-msg{
+    font-size:12px;
+    color:var(--danger);
+    margin:-8px 0 12px;
+    display:none;
+  }
+  .modal-box .error-msg.show{display:block;}
+  .empty{
+    grid-column:1 / -1;
+    text-align:center;
+    padding:50px 20px;
+    color:var(--ink-soft);
+    font-size:14px;
+    border:1.5px dashed var(--rule);
+    border-radius:4px;
+  }
+  .empty strong{
+    display:block;
+    font-family:'Fraunces',serif;
+    font-size:19px;
+    color:var(--ink);
+    margin-bottom:6px;
+    font-weight:500;
+  }
+  .roster{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px;
+    margin:0 0 30px;
+    padding:0;
+    list-style:none;
+  }
+  @media (min-width:640px){
+    .roster{grid-template-columns:repeat(3, minmax(0, 1fr));}
+    .add-row .add-student-btn{max-width:260px;margin:0 auto;}
+  }
+  @media (min-width:860px){
+    .roster{grid-template-columns:repeat(4, minmax(0, 1fr));}
+  }
+  .cell{
+    position:relative;
+    background:#fff;
+    border:1.5px solid var(--ink);
+    border-radius:5px;
+    padding:14px 12px 12px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-width:0;
+    cursor:pointer;
+    transition:box-shadow 0.15s ease, transform 0.15s ease;
+  }
+  .cell:hover{box-shadow:0 3px 0 var(--ink);transform:translateY(-2px);}
+  .cell .name{
+    font-family:'Fraunces',serif;
+    font-size:16px;
+    font-weight:500;
+    min-width:0;
+    overflow-wrap:break-word;
+    padding-right:20px;
+  }
+  .cell .remove-x{
+    position:absolute;
+    top:4px;
+    right:4px;
+    background:none;
+    border:none;
+    color:var(--ink-soft);
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
+    padding:10px;
+    min-width:34px;
+    min-height:34px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:2;
+  }
+  .cell .remove-x:hover{color:var(--danger);}
+  .tally{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:flex-end;
+    gap:5px;
+    min-height:20px;
+  }
+  .tally-group{
+    position:relative;
+    display:flex;
+    gap:2.5px;
+    align-items:flex-end;
+  }
+  .tally-stroke{
+    width:2px;
+    height:18px;
+    background:var(--red);
+    border-radius:1px;
+  }
+  .tally-strike{
+    position:absolute;
+    left:-2px;
+    top:9px;
+    width:20px;
+    height:2px;
+    background:var(--red-dark);
+    transform:rotate(-32deg);
+    border-radius:1px;
+  }
+  .cell-bottom{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:6px;
+    margin-top:2px;
+  }
+  .count{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:16px;
+    font-weight:600;
+    color:var(--red-dark);
+    min-width:20px;
+  }
+  .controls{
+    display:flex;
+    gap:6px;
+    position:relative;
+    z-index:2;
+  }
+  .controls button{
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+    font-size:17px;
+    font-weight:600;
+    cursor:pointer;
+    line-height:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .controls button.plus{background:var(--ink);color:var(--paper);}
+  .controls button.plus:hover{background:var(--red-dark);border-color:var(--red-dark);}
+  .controls button.minus:hover{border-color:var(--red-dark);color:var(--red-dark);}
+  .controls button:disabled{opacity:0.35;cursor:not-allowed;}
+  .footer-actions{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding-top:16px;
+    border-top:2px solid var(--ink);
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .footer-actions .hint{
+    font-size:12px;
+    color:var(--ink-soft);
+    font-style:italic;
+  }
+  .footer-actions .btns{display:flex;gap:8px;}
+  .footer-actions button{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:9px 14px;
+    border-radius:3px;
+    cursor:pointer;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+  }
+  .footer-actions button#resetBtn:hover{border-color:var(--gold);color:var(--gold);}
+  .footer-actions button#clearBtn:hover{border-color:var(--danger);color:var(--danger);}
+  .confirm-bar{
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:var(--gold-soft);
+    border:1.5px solid var(--gold);
+    border-radius:4px;
+    padding:10px 14px;
+    margin-bottom:16px;
+    font-size:13px;
+  }
+  .confirm-bar.show{display:flex;}
+  .confirm-bar .msg{font-weight:500;}
+  .confirm-bar .btns{display:flex;gap:8px;flex-shrink:0;}
+  .confirm-bar button{
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    font-weight:600;
+    padding:6px 12px;
+    border-radius:3px;
+    cursor:pointer;
+    border:1.5px solid var(--ink);
+    background:#fff;
+  }
+  .confirm-bar button.confirm-yes{background:var(--danger);border-color:var(--danger);color:#fff;}
+
+  /* Full-screen detail view */
+  .detail-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:var(--paper);
+    z-index:20;
+    overflow-y:auto;
+    opacity:0;
+    transform:scale(0.96);
+    transition:opacity 0.28s ease, transform 0.28s ease;
+  }
+  .detail-overlay.show{display:block;}
+  .detail-overlay.in{opacity:1;transform:scale(1);}
+  .detail-inner{
+    max-width:760px;
+    margin:0 auto;
+    padding:22px 18px 60px;
+  }
+  .detail-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:22px;
+  }
+  .detail-close{
+    background:#fff;
+    border:1.5px solid var(--ink);
+    border-radius:50%;
+    width:40px;
+    height:40px;
+    font-size:18px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  .detail-close:hover{border-color:var(--danger);color:var(--danger);}
+  .detail-heading h2{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:0 0 4px;
+  }
+  .detail-heading .sub{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .detail-heading .sub b{color:var(--red-dark);}
+  .name-edit-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .name-edit-btn{
+    background:none;
+    border:none;
+    color:var(--ink-soft);
+    font-size:16px;
+    cursor:pointer;
+    padding:6px;
+    flex-shrink:0;
+  }
+  .name-edit-btn:hover{color:var(--red-dark);}
+  .name-edit-input{
+    display:none;
+    width:100%;
+    max-width:340px;
+    font-family:'Fraunces',serif;
+    font-size:22px;
+    font-weight:600;
+    padding:6px 8px;
+    border:1.5px solid var(--ink);
+    border-radius:4px;
+    background:#fff;
+    color:var(--ink);
+    margin-bottom:4px;
+  }
+  .name-edit-input.show{display:block;}
+  .name-edit-input:focus{outline:none;border-color:var(--red-dark);}
+  .detail-controls{
+    display:flex;
+    gap:10px;
+    margin-bottom:28px;
+  }
+  .detail-controls button{
+    flex:1;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    padding:12px;
+    border-radius:4px;
+    cursor:pointer;
+    border:1.5px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+  }
+  .detail-controls button.plus{background:var(--ink);color:var(--paper);}
+  .detail-controls button.plus:hover{background:var(--red-dark);border-color:var(--red-dark);}
+  .detail-controls button:disabled{opacity:0.35;cursor:not-allowed;}
+  .section-label{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--ink-soft);
+    margin:0 0 10px;
+  }
+  .chart-box{
+    border:1.5px solid var(--ink);
+    border-radius:6px;
+    background:#fff;
+    padding:16px 12px 10px;
+    margin-bottom:26px;
+  }
+  .chart-empty{
+    color:var(--ink-soft);
+    font-size:13px;
+    text-align:center;
+    padding:30px 10px;
+  }
+  .bar-chart{width:100%;height:auto;display:block;}
+  .log-list{
+    list-style:none;
+    margin:0;
+    padding:0;
+    border-top:1px solid var(--rule);
+  }
+  .log-list li{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 4px;
+    border-bottom:1px solid var(--rule);
+    font-size:13.5px;
+  }
+  .log-list .log-date{
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+  }
+  .log-list .log-time{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--ink-soft);
+    font-size:12.5px;
+  }
+  .log-empty{
+    color:var(--ink-soft);
+    font-size:13px;
+    padding:16px 4px;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <div class="masthead-left">
+      <h1>Recitation Ledger</h1>
+      <div class="clock" id="clock">&nbsp;</div>
+    </div>
+    <div class="masthead-right">
+      <div class="tally-total">total marks<b id="totalCount">0</b></div>
+      <button class="settings-btn" id="openSheetsBtn" aria-label="Google Sheets settings">&#9881;</button>
+    </div>
+  </div>
+
+  <div class="class-bar">
+    <div class="class-tabs" id="classTabs"></div>
+    <button class="class-manage-btn" id="openClassesBtn" aria-label="Manage classes">&#9998;</button>
+  </div>
+
+  <div class="modal-overlay" id="classesOverlay">
+    <div class="modal-box">
+      <h2>Manage classes</h2>
+      <div id="classList"></div>
+      <div class="class-add-row">
+        <input type="text" id="newClassInput" placeholder="New class or section name" maxlength="40">
+        <button id="addClassBtn">Add</button>
+      </div>
+      <div class="modal-btns" style="margin-top:16px;">
+        <button id="classesCloseBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="sheetsOverlay">
+    <div class="modal-box" style="max-width:460px;text-align:left;">
+      <h2>Google Sheets sync</h2>
+      <div class="sheets-setup">
+        <div class="sheets-setup-title">One-time setup (do this once per Sheet)</div>
+        <ol>
+          <li>Open the Google Sheet you want to use</li>
+          <li>Menu: <b>Extensions &rarr; Apps Script</b></li>
+          <li>Delete anything in the editor, then tap "Copy setup code" below and paste it in</li>
+          <li>Tap the <b>Deploy</b> button (top right) &rarr; <b>New deployment</b></li>
+          <li>Click the gear next to "Select type" &rarr; choose <b>Web app</b></li>
+          <li>Set "Who has access" to <b>Anyone</b> if you can \u2014 or <b>Anyone in [your school]</b> / <b>Anyone with a Google account</b> if that's all your school allows \u2014 then <b>Deploy</b></li>
+          <li>Approve the permissions prompt (it's your own script on your own Sheet)</li>
+          <li>Copy the <b>Web app URL</b> it gives you and paste it below</li>
+        </ol>
+        <button id="copyScriptBtn" type="button">Copy setup code</button>
+        <div class="sheets-status" id="copyStatus"></div>
+      </div>
+      <div class="sheets-field">
+        <label>Web app URL</label>
+        <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+        <div class="help">No Client ID or developer console needed. If your school restricts access, Import/Export will open a tab so you can sign in \u2014 that's normal.</div>
+      </div>
+      <div class="sheets-field">
+        <label>Import tab name</label>
+        <input type="text" id="importTabInput" placeholder="Roster">
+        <div class="help">Column A, one name per row (header row optional). Imports into the current class.</div>
+      </div>
+      <div class="sheets-field">
+        <label>Export tab name</label>
+        <input type="text" id="exportTabInput" placeholder="Export">
+        <div class="help">Exports the current class only; this tab gets overwritten each time.</div>
+      </div>
+      <div class="modal-btns">
+        <button id="sheetsCancel">Close</button>
+        <button class="modal-confirm" id="sheetsSave">Save settings</button>
+      </div>
+      <div class="sheets-actions">
+        <button class="primary" id="importBtn" disabled>Import names</button>
+        <button class="primary" id="exportBtn" disabled>Export to Sheet</button>
+      </div>
+      <div class="sheets-status" id="sheetsStatus"></div>
+    </div>
+  </div>
+
+  <div class="add-row">
+    <button class="add-student-btn" id="openAddBtn"><span class="plus-icon">+</span>Add student</button>
+  </div>
+
+  <div class="modal-overlay" id="addOverlay">
+    <div class="modal-box">
+      <h2>Add a student</h2>
+      <input type="text" id="nameInput" placeholder="Student's name" maxlength="40">
+      <div class="error-msg" id="nameError">Enter a name first</div>
+      <div class="modal-btns">
+        <button id="modalCancel">Cancel</button>
+        <button class="modal-confirm" id="modalAdd">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-bar" id="confirmBar">
+    <span class="msg" id="confirmMsg"></span>
+    <div class="btns">
+      <button id="confirmCancel">Cancel</button>
+      <button class="confirm-yes" id="confirmYes">Confirm</button>
+    </div>
+  </div>
+
+  <div class="roster" id="roster"></div>
+
+  <div class="footer-actions">
+    <span class="hint">Saved on this device until you reset or clear</span>
+    <div class="btns">
+      <button id="resetBtn">Reset points</button>
+      <button id="clearBtn">Clear all</button>
+    </div>
+  </div>
+</div>
+
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-inner">
+    <div class="detail-top">
+      <div class="detail-heading">
+        <div class="name-edit-row">
+          <h2 id="detailName"></h2>
+          <button class="name-edit-btn" id="detailRenameBtn" aria-label="Rename student">&#9998;</button>
+        </div>
+        <input type="text" id="detailNameInput" class="name-edit-input" maxlength="40">
+        <div class="sub"><b id="detailCount">0</b> points logged</div>
+      </div>
+      <button class="detail-close" id="detailClose" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="detail-controls">
+      <button class="minus" id="detailMinus">&minus; Remove last</button>
+      <button class="plus" id="detailPlus">+ Add point</button>
+    </div>
+
+    <div class="section-label">Points per day</div>
+    <div class="chart-box" id="chartBox"></div>
+
+    <div class="section-label">Log</div>
+    <ul class="log-list" id="logList"></ul>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'recitation-ledger-data';
+
+function makeDefaultData(){
+  return {
+    classes: [{ id: 1, name: 'My Class', students: [] }],
+    activeClassId: 1,
+    nextClassId: 2,
+    nextStudentId: 1
+  };
+}
+
+function loadState(){
+  let raw;
+  try{ raw = localStorage.getItem(STORAGE_KEY); }catch(e){ raw = null; }
+  if(!raw) return makeDefaultData();
+  let parsed;
+  try{ parsed = JSON.parse(raw); }catch(e){ return makeDefaultData(); }
+
+  // Migrate old flat-student format (pre-classes) into a single default class.
+  if(Array.isArray(parsed.students) && !Array.isArray(parsed.classes)){
+    const migratedStudents = parsed.students.map(s => {
+      if(Array.isArray(s.ticks)) return s;
+      const n = typeof s.points === 'number' ? s.points : 0;
+      const now = new Date().toISOString();
+      return { id: s.id, name: s.name, ticks: Array.from({length:n}, () => now) };
+    });
+    return {
+      classes: [{ id: 1, name: 'My Class', students: migratedStudents }],
+      activeClassId: 1,
+      nextClassId: 2,
+      nextStudentId: typeof parsed.nextId === 'number' ? parsed.nextId : (migratedStudents.length + 1)
+    };
+  }
+
+  if(!Array.isArray(parsed.classes) || parsed.classes.length === 0){
+    return makeDefaultData();
+  }
+  const classes = parsed.classes.map(c => ({
+    id: c.id,
+    name: c.name || 'Class',
+    students: Array.isArray(c.students) ? c.students.map(s => ({
+      id: s.id,
+      name: s.name,
+      ticks: Array.isArray(s.ticks) ? s.ticks : []
+    })) : []
+  }));
+  const activeClassId = classes.some(c => c.id === parsed.activeClassId) ? parsed.activeClassId : classes[0].id;
+  return {
+    classes: classes,
+    activeClassId: activeClassId,
+    nextClassId: typeof parsed.nextClassId === 'number' ? parsed.nextClassId : (Math.max(...classes.map(c=>c.id)) + 1),
+    nextStudentId: typeof parsed.nextStudentId === 'number' ? parsed.nextStudentId : 1
+  };
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+  }catch(e){}
+}
+
+let appData = loadState();
+let pendingAction = null;
+let openDetailId = null;
+
+function getActiveClass(){
+  return appData.classes.find(c => c.id === appData.activeClassId) || appData.classes[0];
+}
+
+const roster = document.getElementById('roster');
+const nameInput = document.getElementById('nameInput');
+const openAddBtn = document.getElementById('openAddBtn');
+const addOverlay = document.getElementById('addOverlay');
+const modalAdd = document.getElementById('modalAdd');
+const modalCancel = document.getElementById('modalCancel');
+const nameError = document.getElementById('nameError');
+const totalCount = document.getElementById('totalCount');
+const confirmBar = document.getElementById('confirmBar');
+const confirmMsg = document.getElementById('confirmMsg');
+const clockEl = document.getElementById('clock');
+const classTabs = document.getElementById('classTabs');
+const openClassesBtn = document.getElementById('openClassesBtn');
+const classesOverlay = document.getElementById('classesOverlay');
+const classList = document.getElementById('classList');
+const newClassInput = document.getElementById('newClassInput');
+const addClassBtn = document.getElementById('addClassBtn');
+const classesCloseBtn = document.getElementById('classesCloseBtn');
+
+const detailOverlay = document.getElementById('detailOverlay');
+const detailName = document.getElementById('detailName');
+const detailNameInput = document.getElementById('detailNameInput');
+const detailRenameBtn = document.getElementById('detailRenameBtn');
+const detailCount = document.getElementById('detailCount');
+const detailMinus = document.getElementById('detailMinus');
+const detailPlus = document.getElementById('detailPlus');
+const detailClose = document.getElementById('detailClose');
+const chartBox = document.getElementById('chartBox');
+const logList = document.getElementById('logList');
+
+function updateClock(){
+  const now = new Date();
+  const dateStr = now.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
+  const timeStr = now.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+  clockEl.textContent = dateStr + '  \u2022  ' + timeStr;
+}
+updateClock();
+setInterval(updateClock, 15000);
+
+function buildTally(n){
+  const wrap = document.createElement('div');
+  wrap.className = 'tally';
+  const full = Math.floor(n / 5);
+  const rem = n % 5;
+  for(let g=0; g<full; g++){
+    const grp = document.createElement('div');
+    grp.className = 'tally-group';
+    for(let i=0;i<4;i++){
+      const s = document.createElement('div');
+      s.className = 'tally-stroke';
+      grp.appendChild(s);
+    }
+    const strike = document.createElement('div');
+    strike.className = 'tally-strike';
+    grp.appendChild(strike);
+    wrap.appendChild(grp);
+  }
+  if(rem > 0){
+    const grp = document.createElement('div');
+    grp.className = 'tally-group';
+    for(let i=0;i<rem;i++){
+      const s = document.createElement('div');
+      s.className = 'tally-stroke';
+      grp.appendChild(s);
+    }
+    wrap.appendChild(grp);
+  }
+  return wrap;
+}
+
+function findStudent(id){
+  return getActiveClass().students.find(s => s.id === id);
+}
+
+function renderClassTabs(){
+  classTabs.innerHTML = '';
+  appData.classes.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'class-tab' + (c.id === appData.activeClassId ? ' active' : '');
+    btn.textContent = c.name;
+    btn.onclick = () => {
+      appData.activeClassId = c.id;
+      closeDetail();
+      render();
+    };
+    classTabs.appendChild(btn);
+  });
+  const addBtn = document.createElement('button');
+  addBtn.className = 'class-tab class-tab-add';
+  addBtn.textContent = '+ Class';
+  addBtn.setAttribute('aria-label', 'Add a new class');
+  addBtn.onclick = () => {
+    openClassesModal();
+    setTimeout(() => newClassInput.focus(), 0);
+  };
+  classTabs.appendChild(addBtn);
+}
+
+function render(){
+  saveState();
+  renderClassTabs();
+  const activeClass = getActiveClass();
+  const studentsList = activeClass.students;
+
+  roster.innerHTML = '';
+  if(studentsList.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.innerHTML = '<strong>No names yet</strong>Tap "Add student" to start tracking recitation points for ' + activeClass.name + '.';
+    roster.appendChild(empty);
+    totalCount.textContent = '0';
+  } else {
+    let total = 0;
+    studentsList.forEach(st => {
+      const n = st.ticks.length;
+      total += n;
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.onclick = () => openDetail(st.id);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'remove-x';
+      removeBtn.textContent = '\u00d7';
+      removeBtn.setAttribute('aria-label', 'Remove ' + st.name);
+      removeBtn.onclick = (e) => {
+        e.stopPropagation();
+        activeClass.students = activeClass.students.filter(s => s.id !== st.id);
+        render();
+      };
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'name';
+      nameEl.textContent = st.name;
+
+      const tallyEl = buildTally(n);
+
+      const bottom = document.createElement('div');
+      bottom.className = 'cell-bottom';
+
+      const countEl = document.createElement('div');
+      countEl.className = 'count';
+      countEl.textContent = n;
+
+      const controls = document.createElement('div');
+      controls.className = 'controls';
+
+      const minusBtn = document.createElement('button');
+      minusBtn.className = 'minus';
+      minusBtn.textContent = '\u2212';
+      minusBtn.setAttribute('aria-label', 'Remove one point from ' + st.name);
+      minusBtn.disabled = n <= 0;
+      minusBtn.onclick = (e) => { e.stopPropagation(); st.ticks.pop(); render(); };
+
+      const plusBtn = document.createElement('button');
+      plusBtn.className = 'plus';
+      plusBtn.textContent = '+';
+      plusBtn.setAttribute('aria-label', 'Add one point to ' + st.name);
+      plusBtn.onclick = (e) => { e.stopPropagation(); st.ticks.push(new Date().toISOString()); render(); };
+
+      controls.appendChild(minusBtn);
+      controls.appendChild(plusBtn);
+      bottom.appendChild(countEl);
+      bottom.appendChild(controls);
+
+      cell.appendChild(removeBtn);
+      cell.appendChild(nameEl);
+      cell.appendChild(tallyEl);
+      cell.appendChild(bottom);
+      roster.appendChild(cell);
+    });
+    totalCount.textContent = total;
+  }
+
+  if(openDetailId !== null){
+    const st = findStudent(openDetailId);
+    if(st) renderDetail(st);
+    else closeDetail();
+  }
+}
+
+function dayKey(iso){
+  const d = new Date(iso);
+  return d.toISOString().slice(0,10);
+}
+
+function dayLabel(key){
+  const d = new Date(key + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+}
+
+function renderDetail(st){
+  detailName.textContent = st.name;
+  if(!detailNameInput.classList.contains('show')){
+    detailNameInput.value = st.name;
+  }
+  detailCount.textContent = st.ticks.length;
+  detailMinus.disabled = st.ticks.length === 0;
+
+  const counts = {};
+  st.ticks.forEach(iso => {
+    const k = dayKey(iso);
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  const days = Object.keys(counts).sort();
+
+  chartBox.innerHTML = '';
+  if(days.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'chart-empty';
+    empty.textContent = 'No points logged yet.';
+    chartBox.appendChild(empty);
+  } else {
+    const shown = days.slice(-14);
+    const maxVal = Math.max(...shown.map(k => counts[k]), 1);
+    const w = 700, h = 200, padL = 26, padB = 30, padT = 10;
+    const barGap = 8;
+    const barW = (w - padL - 10) / shown.length - barGap;
+    let svg = '<svg class="bar-chart" viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">';
+    svg += '<line x1="' + padL + '" y1="' + (h-padB) + '" x2="' + w + '" y2="' + (h-padB) + '" stroke="#C7BFA2" stroke-width="1.5"/>';
+    shown.forEach((k, i) => {
+      const val = counts[k];
+      const barH = (val / maxVal) * (h - padB - padT - 16);
+      const x = padL + i * (barW + barGap) + barGap/2;
+      const y = h - padB - barH;
+      svg += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + barH.toFixed(1) + '" rx="2" fill="#A5342E"/>';
+      svg += '<text x="' + (x + barW/2).toFixed(1) + '" y="' + (y - 5) + '" font-size="11" font-family="IBM Plex Mono, monospace" fill="#7C2622" text-anchor="middle">' + val + '</text>';
+      svg += '<text x="' + (x + barW/2).toFixed(1) + '" y="' + (h - padB + 15) + '" font-size="9.5" font-family="Inter, sans-serif" fill="#5B6154" text-anchor="middle">' + dayLabel(k) + '</text>';
+    });
+    svg += '</svg>';
+    chartBox.innerHTML = svg;
+  }
+
+  logList.innerHTML = '';
+  if(st.ticks.length === 0){
+    const li = document.createElement('li');
+    li.className = 'log-empty';
+    li.textContent = 'Nothing logged for this student yet.';
+    logList.appendChild(li);
+  } else {
+    const sorted = st.ticks.slice().sort().reverse();
+    sorted.forEach(iso => {
+      const d = new Date(iso);
+      const li = document.createElement('li');
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'log-date';
+      dateSpan.textContent = d.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'log-time';
+      timeSpan.textContent = d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+      li.appendChild(dateSpan);
+      li.appendChild(timeSpan);
+      logList.appendChild(li);
+    });
+  }
+}
+
+function openDetail(id){
+  openDetailId = id;
+  const st = findStudent(id);
+  if(!st) return;
+  detailNameInput.classList.remove('show');
+  detailName.style.display = '';
+  detailRenameBtn.style.display = '';
+  renderDetail(st);
+  detailOverlay.classList.add('show');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => detailOverlay.classList.add('in'));
+  });
+}
+
+function closeDetail(){
+  detailOverlay.classList.remove('in');
+  openDetailId = null;
+  setTimeout(() => {
+    if(openDetailId === null) detailOverlay.classList.remove('show');
+  }, 280);
+}
+
+detailClose.onclick = closeDetail;
+
+function startRenameStudent(){
+  const st = findStudent(openDetailId);
+  if(!st) return;
+  detailNameInput.value = st.name;
+  detailName.style.display = 'none';
+  detailRenameBtn.style.display = 'none';
+  detailNameInput.classList.add('show');
+  detailNameInput.focus();
+  detailNameInput.select();
+}
+
+function commitRenameStudent(){
+  const st = findStudent(openDetailId);
+  detailNameInput.classList.remove('show');
+  detailName.style.display = '';
+  detailRenameBtn.style.display = '';
+  if(!st) return;
+  const val = detailNameInput.value.trim();
+  if(val && val !== st.name){
+    st.name = val;
+    render();
+  } else {
+    detailNameInput.value = st.name;
+  }
+}
+
+detailRenameBtn.onclick = startRenameStudent;
+detailNameInput.addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); commitRenameStudent(); }
+  if(e.key === 'Escape'){ e.preventDefault(); detailNameInput.value = findStudent(openDetailId).name; commitRenameStudent(); }
+});
+detailNameInput.addEventListener('blur', commitRenameStudent);
+
+detailPlus.onclick = () => {
+  const st = findStudent(openDetailId);
+  if(!st) return;
+  st.ticks.push(new Date().toISOString());
+  render();
+};
+detailMinus.onclick = () => {
+  const st = findStudent(openDetailId);
+  if(!st || st.ticks.length === 0) return;
+  st.ticks.pop();
+  render();
+};
+
+function openAddModal(){
+  nameInput.value = '';
+  nameError.classList.remove('show');
+  addOverlay.classList.add('show');
+  setTimeout(() => nameInput.focus(), 0);
+}
+
+function closeAddModal(){
+  addOverlay.classList.remove('show');
+}
+
+function addStudent(){
+  const name = nameInput.value.trim();
+  if(!name){
+    nameError.classList.add('show');
+    nameInput.focus();
+    return;
+  }
+  getActiveClass().students.push({ id: appData.nextStudentId++, name: name, ticks: [] });
+  closeAddModal();
+  render();
+}
+
+openAddBtn.onclick = openAddModal;
+modalCancel.onclick = closeAddModal;
+modalAdd.onclick = addStudent;
+addOverlay.addEventListener('click', e => {
+  if(e.target === addOverlay) closeAddModal();
+});
+nameInput.addEventListener('keydown', e => {
+  if(e.key === 'Enter') addStudent();
+});
+nameInput.addEventListener('input', () => nameError.classList.remove('show'));
+
+/* ---- Classes management ---- */
+function renderClassList(){
+  classList.innerHTML = '';
+  appData.classes.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'class-row';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = c.name;
+    input.maxLength = 40;
+    input.addEventListener('change', () => {
+      const v = input.value.trim();
+      if(v) c.name = v;
+      else input.value = c.name;
+      saveState();
+      renderClassTabs();
+    });
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'del';
+    delBtn.textContent = 'Delete';
+    delBtn.disabled = appData.classes.length <= 1;
+    delBtn.onclick = () => {
+      if(appData.classes.length <= 1) return;
+      askConfirm('deleteClass:' + c.id, 'Delete "' + c.name + '" and everyone in it? This cannot be undone.');
+    };
+
+    row.appendChild(input);
+    row.appendChild(delBtn);
+    classList.appendChild(row);
+  });
+}
+
+function openClassesModal(){
+  renderClassList();
+  newClassInput.value = '';
+  classesOverlay.classList.add('show');
+}
+function closeClassesModal(){ classesOverlay.classList.remove('show'); }
+
+openClassesBtn.onclick = openClassesModal;
+classesCloseBtn.onclick = closeClassesModal;
+classesOverlay.addEventListener('click', e => { if(e.target === classesOverlay) closeClassesModal(); });
+
+function addClass(){
+  const name = newClassInput.value.trim();
+  if(!name) return;
+  const newClass = { id: appData.nextClassId++, name: name, students: [] };
+  appData.classes.push(newClass);
+  appData.activeClassId = newClass.id;
+  newClassInput.value = '';
+  saveState();
+  renderClassList();
+  render();
+}
+addClassBtn.onclick = addClass;
+newClassInput.addEventListener('keydown', e => { if(e.key === 'Enter') addClass(); });
+
+function askConfirm(action, message){
+  pendingAction = action;
+  confirmMsg.textContent = message;
+  confirmBar.classList.add('show');
+}
+
+document.getElementById('resetBtn').onclick = () => {
+  askConfirm('reset', 'Reset every point in "' + getActiveClass().name + '" to zero? Names stay.');
+};
+document.getElementById('clearBtn').onclick = () => {
+  askConfirm('clear', 'Remove all names and points in "' + getActiveClass().name + '"? This cannot be undone.');
+};
+document.getElementById('confirmCancel').onclick = () => {
+  pendingAction = null;
+  confirmBar.classList.remove('show');
+};
+document.getElementById('confirmYes').onclick = () => {
+  if(pendingAction === 'reset'){
+    getActiveClass().students.forEach(s => s.ticks = []);
+  } else if(pendingAction === 'clear'){
+    getActiveClass().students = [];
+    closeDetail();
+  } else if(pendingAction && pendingAction.indexOf('deleteClass:') === 0){
+    const id = Number(pendingAction.split(':')[1]);
+    appData.classes = appData.classes.filter(c => c.id !== id);
+    if(appData.activeClassId === id){
+      appData.activeClassId = appData.classes[0].id;
+    }
+    closeDetail();
+    renderClassList();
+  }
+  pendingAction = null;
+  confirmBar.classList.remove('show');
+  render();
+};
+
+/* ---- Google Sheets sync via Apps Script Web App ---- */
+const SHEETS_SETTINGS_KEY = 'recitation-ledger-sheets-settings';
+const openSheetsBtn = document.getElementById('openSheetsBtn');
+const sheetsOverlay = document.getElementById('sheetsOverlay');
+const sheetsCancel = document.getElementById('sheetsCancel');
+const sheetsSave = document.getElementById('sheetsSave');
+const scriptUrlInput = document.getElementById('scriptUrlInput');
+const importTabInput = document.getElementById('importTabInput');
+const exportTabInput = document.getElementById('exportTabInput');
+const importBtn = document.getElementById('importBtn');
+const exportBtn = document.getElementById('exportBtn');
+const sheetsStatus = document.getElementById('sheetsStatus');
+const copyScriptBtn = document.getElementById('copyScriptBtn');
+const copyStatus = document.getElementById('copyStatus');
+
+let sheetsSettings = { scriptUrl:'', importTab:'Roster', exportTab:'Export' };
+
+const APPS_SCRIPT_CODE = [
+  "function bounceBack_(payload) {",
+  "  var json = JSON.stringify(payload).replace(/<\\//g, '<\\\\/');",
+  "  var html = '<!DOCTYPE html><html><body style=\"font-family:sans-serif;padding:24px;\">'",
+  "    + '<p>Done \u2014 you can close this tab.</p>'",
+  "    + '<script>'",
+  "    + 'if (window.opener) { window.opener.postMessage(' + json + ', \"*\"); }'",
+  "    + 'setTimeout(function(){ window.close(); }, 400);'",
+  "    + '<\\/script></body></html>';",
+  "  return HtmlService.createHtmlOutput(html);",
+  "}",
+  "",
+  "function doGet(e) {",
+  "  var tabName = (e.parameter.tab || 'Roster');",
+  "  var ss = SpreadsheetApp.getActiveSpreadsheet();",
+  "  var sheet = ss.getSheetByName(tabName);",
+  "  var names = [];",
+  "  if (sheet) {",
+  "    var lastRow = sheet.getLastRow();",
+  "    if (lastRow > 0) {",
+  "      var values = sheet.getRange(1, 1, lastRow, 1).getValues();",
+  "      names = values.map(function(r){ return r[0]; }).filter(function(v){ return v !== '' && v !== null && v !== undefined; });",
+  "    }",
+  "  }",
+  "  return bounceBack_({ type: 'rl-import', names: names });",
+  "}",
+  "",
+  "function doPost(e) {",
+  "  var body = JSON.parse(e.parameter.values || '{}');",
+  "  var tabName = body.tab || 'Export';",
+  "  var values = body.values || [];",
+  "  var ss = SpreadsheetApp.getActiveSpreadsheet();",
+  "  var sheet = ss.getSheetByName(tabName);",
+  "  if (!sheet) { sheet = ss.insertSheet(tabName); }",
+  "  sheet.clearContents();",
+  "  if (values.length > 0) {",
+  "    var numCols = 1;",
+  "    for (var i = 0; i < values.length; i++) { if (values[i].length > numCols) numCols = values[i].length; }",
+  "    var padded = values.map(function(r){",
+  "      var row = r.slice();",
+  "      while (row.length < numCols) row.push('');",
+  "      return row;",
+  "    });",
+  "    sheet.getRange(1, 1, padded.length, numCols).setValues(padded);",
+  "  }",
+  "  return bounceBack_({ type: 'rl-export', ok: true });",
+  "}"
+].join('\n');
+
+copyScriptBtn.onclick = async () => {
+  try{
+    await navigator.clipboard.writeText(APPS_SCRIPT_CODE);
+    copyStatus.className = 'sheets-status show ok';
+    copyStatus.textContent = 'Copied. Paste it into the Apps Script editor.';
+  }catch(e){
+    copyStatus.className = 'sheets-status show err';
+    copyStatus.textContent = 'Could not copy automatically \u2014 select and copy the code manually.';
+  }
+};
+
+function loadSheetsSettings(){
+  try{
+    const raw = localStorage.getItem(SHEETS_SETTINGS_KEY);
+    if(raw){
+      const p = JSON.parse(raw);
+      sheetsSettings = {
+        scriptUrl: p.scriptUrl || '',
+        importTab: p.importTab || 'Roster',
+        exportTab: p.exportTab || 'Export'
+      };
+    }
+  }catch(e){}
+  scriptUrlInput.value = sheetsSettings.scriptUrl;
+  importTabInput.value = sheetsSettings.importTab;
+  exportTabInput.value = sheetsSettings.exportTab;
+  updateSheetsButtons();
+}
+
+function updateSheetsButtons(){
+  const ready = !!sheetsSettings.scriptUrl;
+  importBtn.disabled = !ready;
+  exportBtn.disabled = !ready;
+}
+
+function saveSheetsSettings(){
+  sheetsSettings = {
+    scriptUrl: scriptUrlInput.value.trim(),
+    importTab: importTabInput.value.trim() || 'Roster',
+    exportTab: exportTabInput.value.trim() || 'Export'
+  };
+  localStorage.setItem(SHEETS_SETTINGS_KEY, JSON.stringify(sheetsSettings));
+  showSheetsStatus('ok', 'Settings saved.');
+  updateSheetsButtons();
+}
+
+function showSheetsStatus(kind, msg){
+  sheetsStatus.className = 'sheets-status show ' + kind;
+  sheetsStatus.textContent = msg;
+}
+
+function openSheetsModal(){
+  loadSheetsSettings();
+  sheetsStatus.classList.remove('show');
+  copyStatus.classList.remove('show');
+  sheetsOverlay.classList.add('show');
+}
+function closeSheetsModal(){ sheetsOverlay.classList.remove('show'); }
+
+openSheetsBtn.onclick = openSheetsModal;
+sheetsCancel.onclick = closeSheetsModal;
+sheetsOverlay.addEventListener('click', e => { if(e.target === sheetsOverlay) closeSheetsModal(); });
+sheetsSave.onclick = saveSheetsSettings;
+
+let sheetsPopupTimer = null;
+
+function waitForSheetsMessage(expectedType, onMessage, onTimeout){
+  if(sheetsPopupTimer) clearTimeout(sheetsPopupTimer);
+  const handler = (event) => {
+    if(!event.data || event.data.type !== expectedType) return;
+    window.removeEventListener('message', handler);
+    if(sheetsPopupTimer) clearTimeout(sheetsPopupTimer);
+    onMessage(event.data);
+  };
+  window.addEventListener('message', handler);
+  sheetsPopupTimer = setTimeout(() => {
+    window.removeEventListener('message', handler);
+    onTimeout();
+  }, 45000);
+}
+
+importBtn.onclick = () => {
+  if(!sheetsSettings.scriptUrl){
+    showSheetsStatus('err', 'Paste your Web app URL and save first.');
+    return;
+  }
+  const url = sheetsSettings.scriptUrl + (sheetsSettings.scriptUrl.indexOf('?') === -1 ? '?' : '&') + 'tab=' + encodeURIComponent(sheetsSettings.importTab);
+  const popup = window.open(url, 'rlImport');
+  if(!popup){
+    showSheetsStatus('err', 'Popup blocked. Allow popups for this site, then try again.');
+    return;
+  }
+  showSheetsStatus('pending', 'Sign in if asked, then wait\u2026 (a tab just opened)');
+  waitForSheetsMessage('rl-import', (data) => {
+    const rawNames = Array.isArray(data.names) ? data.names : [];
+    const activeClass = getActiveClass();
+    const existing = new Set(activeClass.students.map(s => s.name.trim().toLowerCase()));
+    let added = 0;
+    rawNames.forEach(n => {
+      const clean = String(n).trim();
+      const lower = clean.toLowerCase();
+      const headerLabels = ['name', 'names', 'student', 'students'];
+      if(!clean || headerLabels.includes(lower) || existing.has(lower)) return;
+      activeClass.students.push({ id: appData.nextStudentId++, name: clean, ticks: [] });
+      existing.add(lower);
+      added++;
+    });
+    render();
+    showSheetsStatus('ok', 'Imported ' + added + ' new name' + (added === 1 ? '' : 's') + ' into "' + activeClass.name + '".');
+  }, () => {
+    try{ popup.close(); }catch(e){}
+    showSheetsStatus('err', 'No response after 45s. Check the Web app URL, or the tab may be waiting on a Google sign-in \u2014 try again and complete sign-in quickly.');
+  });
+};
+
+exportBtn.onclick = () => {
+  if(!sheetsSettings.scriptUrl){
+    showSheetsStatus('err', 'Paste your Web app URL and save first.');
+    return;
+  }
+  const activeClass = getActiveClass();
+  const summaryRows = [['Class', activeClass.name], ['Name', 'Total Points']];
+  activeClass.students.forEach(s => summaryRows.push([s.name, s.ticks.length]));
+  summaryRows.push(['', '']);
+  summaryRows.push(['Name', 'Date', 'Time']);
+  activeClass.students.forEach(s => {
+    s.ticks.slice().sort().forEach(iso => {
+      const d = new Date(iso);
+      summaryRows.push([s.name, d.toLocaleDateString(), d.toLocaleTimeString()]);
+    });
+  });
+  const popup = window.open('', 'rlExport');
+  if(!popup){
+    showSheetsStatus('err', 'Popup blocked. Allow popups for this site, then try again.');
+    return;
+  }
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = sheetsSettings.scriptUrl;
+  form.target = 'rlExport';
+  const field = document.createElement('input');
+  field.type = 'hidden';
+  field.name = 'values';
+  field.value = JSON.stringify({ tab: sheetsSettings.exportTab, values: summaryRows });
+  form.appendChild(field);
+  document.body.appendChild(form);
+  form.submit();
+  document.body.removeChild(form);
+  showSheetsStatus('pending', 'Sign in if asked, then wait\u2026 (a tab just opened)');
+  waitForSheetsMessage('rl-export', () => {
+    showSheetsStatus('ok', 'Exported ' + activeClass.students.length + ' students from "' + activeClass.name + '" to "' + sheetsSettings.exportTab + '".');
+  }, () => {
+    try{ popup.close(); }catch(e){}
+    showSheetsStatus('err', 'No response after 45s. Check the Web app URL, or the tab may be waiting on a Google sign-in \u2014 try again and complete sign-in quickly.');
+  });
+};
+
+loadSheetsSettings();
+
+render();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
