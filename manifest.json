@@ -1,0 +1,14 @@
+{
+  "name": "Recitation Ledger",
+  "short_name": "Ledger",
+  "description": "Track recitation points by name, with tally-mark scoring.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F3EEDD",
+  "theme_color": "#232C22",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
