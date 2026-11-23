@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // True if the signed-in account is listed as a master in this owner's grants doc.
+    function isMaster(userId) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/grants/$(userId))
+        && request.auth.uid in get(/databases/$(database)/documents/grants/$(userId)).data.masters;
+    }
+
+    // Each account's ledger. The owner has full access.
+    // A master account can read and edit it, but cannot delete the document.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, create, update: if isMaster(userId);
+    }
+
+    // Which master accounts an owner has allowed. Only the owner can see or change it,
+    // so a master key can only be granted by signing in to the account being opened.
+    match /grants/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['masters'])
+        && request.resource.data.masters is list
+        && request.resource.data.masters.size() <= 10;
+    }
+  }
+}
